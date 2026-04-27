@@ -1,0 +1,86 @@
+@baseurl=http://localhost:8080
+@token=PASTE_TOKEN_HERE
+
+###############################################
+### Health Check
+###############################################
+GET {{baseurl}}/
+
+###
+
+###############################################
+### Auth - Login
+###############################################
+# @name Login
+POST {{baseurl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+###
+
+###############################################
+### Auth - Me
+###############################################
+GET {{baseurl}}/auth/me
+Authorization: Bearer {{token}}
+
+###
+
+###############################################
+### Generate Skincare Routine
+###############################################
+# @name GenerateRoutine
+POST {{baseurl}}/skincare/generate
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "skin_type": "oily",
+  "skin_concerns": "acne, dark spots, large pores",
+  "budget": "medium"
+}
+
+###
+
+###############################################
+### Generate - Dry Skin Example
+###############################################
+POST {{baseurl}}/skincare/generate
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "skin_type": "dry",
+  "skin_concerns": "dehydration, fine lines, dullness",
+  "budget": "high"
+}
+
+###
+
+###############################################
+### Get Routines (Pagination)
+###############################################
+GET {{baseurl}}/skincare?page=1&per_page=10
+Authorization: Bearer {{token}}
+
+###
+
+###############################################
+### Get Single Routine
+###############################################
+GET {{baseurl}}/skincare/1
+Authorization: Bearer {{token}}
+
+###
+
+###############################################
+### Delete Routine
+###############################################
+DELETE {{baseurl}}/skincare/1
+Authorization: Bearer {{token}}
+
+###
