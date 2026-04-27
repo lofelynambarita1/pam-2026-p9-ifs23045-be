@@ -20,8 +20,7 @@ def get_routines():
     user_id = int(get_jwt_identity())
 
     page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 10, type=int)
-    per_page = min(per_page, 50)
+    per_page = min(request.args.get("per_page", 10, type=int), 50)
 
     pagination = SkincareRoutine.query.filter_by(user_id=user_id)\
         .order_by(SkincareRoutine.created_at.desc())\
@@ -62,6 +61,7 @@ def generate():
     skin_concerns = data.get("skin_concerns", "").strip()
     budget = data.get("budget", "").strip().lower()
 
+    # Validasi
     if not skin_type:
         return jsonify({"message": "skin_type wajib diisi"}), 400
     if skin_type not in VALID_SKIN_TYPES:
@@ -72,6 +72,9 @@ def generate():
         return jsonify({"message": "budget wajib diisi"}), 400
     if budget not in VALID_BUDGETS:
         return jsonify({"message": f"budget harus salah satu dari: {', '.join(VALID_BUDGETS)}"}), 400
+
+    # Batasi panjang skin_concerns agar tidak membengkakkan token
+    skin_concerns = skin_concerns[:100]
 
     try:
         result = generate_skincare_routine(skin_type, skin_concerns, budget)

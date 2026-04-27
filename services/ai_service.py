@@ -5,15 +5,8 @@ from config import Config
 
 logger = logging.getLogger(__name__)
 
-# Compact schema — model fills it, no verbose examples needed
-SYSTEM_PROMPT = (
-    "Skincare expert. Return ONLY valid JSON, no markdown, no extra text:\n"
-    '{"routine_title":"...","summary":"2-3 sentences",'
-    '"morning_routine":[{"step":1,"name":"...","product_type":"...","instruction":"...","why":"..."}],'
-    '"evening_routine":[{"step":1,"name":"...","product_type":"...","instruction":"...","why":"..."}],'
-    '"product_recommendations":[{"category":"...","product_name":"...","brand":"...","price_range":"Rp ...","why_recommended":"..."}],'
-    '"tips":["..."]}'
-)
+# Ultra-compact schema to minimize input tokens
+SYSTEM_PROMPT = 'Reply ONLY valid JSON: {"routine_title":"","summary":"","morning_routine":[{"step":1,"name":"","product_type":"","instruction":"","why":""}],"evening_routine":[{"step":1,"name":"","product_type":"","instruction":"","why":""}],"product_recommendations":[{"category":"","product_name":"","brand":"","price_range":"","why_recommended":""}],"tips":[""]}'
 
 REQUIRED_KEYS = {"routine_title", "summary", "morning_routine", "evening_routine", "product_recommendations", "tips"}
 
@@ -21,7 +14,7 @@ REQUIRED_KEYS = {"routine_title", "summary", "morning_routine", "evening_routine
 def _validate_result(result: dict) -> dict:
     missing = REQUIRED_KEYS - result.keys()
     if missing:
-        raise ValueError(f"Incomplete JSON from LLM — missing keys: {missing}")
+        raise ValueError(f"Missing keys: {missing}")
 
     result["routine_title"] = str(result["routine_title"]).strip() or "Personalized Skincare Routine"
     result["summary"] = str(result["summary"]).strip()
@@ -34,15 +27,14 @@ def _validate_result(result: dict) -> dict:
 
 
 def generate_skincare_routine(skin_type: str, skin_concerns: str, budget: str) -> dict:
-    # Compact user prompt — just the facts, no repetition
-    user_prompt = (
-        f"Skin: {skin_type} | Concerns: {skin_concerns} | Budget: {budget} | Market: Indonesia\n"
-        "Create morning+evening routine with product recs."
+    prompt = (
+        f"{SYSTEM_PROMPT}\n"
+        f"Skincare routine. Skin:{skin_type}, Issues:{skin_concerns}, Budget:{budget}, Market:Indonesia."
     )
 
     payload = {
         "token": Config.LLM_TOKEN,
-        "chat": f"{SYSTEM_PROMPT}\n\n{user_prompt}"
+        "chat": prompt
     }
 
     response = requests.post(
@@ -83,3 +75,5 @@ def generate_skincare_routine(skin_type: str, skin_concerns: str, budget: str) -
         raise ValueError("LLM returned invalid JSON") from e
 
     return _validate_result(result)
+# NOTE: Tambahkan batasan jumlah item di prompt jika kredit masih kurang:
+# f"...Keep: 3 morning steps, 3 evening steps, 3 products, 3 tips max."
