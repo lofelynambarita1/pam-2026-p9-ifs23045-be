@@ -64,5 +64,5 @@ def create_app():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     app = create_app()
-    port = int(os.environ.get("PORT", 8080))
+    port = int(os.environ.get("PORT", 31151))
     app.run(debug=False, port=port)
