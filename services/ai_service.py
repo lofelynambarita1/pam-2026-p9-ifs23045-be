@@ -5,26 +5,15 @@ from config import Config
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are a professional dermatologist and skincare expert. 
-Given skin type, concerns, and budget, create a personalized skincare routine.
-Respond ONLY with valid JSON, no markdown, no explanation:
-{
-  "routine_title": "Personalized Skincare Routine Title",
-  "summary": "Brief 2-3 sentence summary of the overall approach and what to expect",
-  "morning_routine": [
-    {"step": 1, "name": "Cleanser", "product_type": "Gentle Foaming Cleanser", "instruction": "Apply to damp face, massage gently for 60 seconds, rinse with lukewarm water", "why": "Removes overnight sebum and prepares skin for absorption"}
-  ],
-  "evening_routine": [
-    {"step": 1, "name": "Double Cleanse - Oil", "product_type": "Cleansing Oil/Balm", "instruction": "Massage onto dry skin to dissolve makeup and SPF, then emulsify with water", "why": "Effectively removes sunscreen and makeup residue"}
-  ],
-  "product_recommendations": [
-    {"category": "Cleanser", "product_name": "Product Name", "brand": "Brand", "price_range": "Rp 50.000 - 150.000", "why_recommended": "Suitable for oily skin, non-comedogenic"}
-  ],
-  "tips": [
-    "Always patch test new products for 24-48 hours before full application",
-    "Introduce new active ingredients gradually, one at a time"
-  ]
-}"""
+# Compact schema — model fills it, no verbose examples needed
+SYSTEM_PROMPT = (
+    "Skincare expert. Return ONLY valid JSON, no markdown, no extra text:\n"
+    '{"routine_title":"...","summary":"2-3 sentences",'
+    '"morning_routine":[{"step":1,"name":"...","product_type":"...","instruction":"...","why":"..."}],'
+    '"evening_routine":[{"step":1,"name":"...","product_type":"...","instruction":"...","why":"..."}],'
+    '"product_recommendations":[{"category":"...","product_name":"...","brand":"...","price_range":"Rp ...","why_recommended":"..."}],'
+    '"tips":["..."]}'
+)
 
 REQUIRED_KEYS = {"routine_title", "summary", "morning_routine", "evening_routine", "product_recommendations", "tips"}
 
@@ -45,18 +34,15 @@ def _validate_result(result: dict) -> dict:
 
 
 def generate_skincare_routine(skin_type: str, skin_concerns: str, budget: str) -> dict:
-    prompt = f"""{SYSTEM_PROMPT}
-
-User Profile:
-- Skin Type: {skin_type}
-- Skin Concerns: {skin_concerns}
-- Budget: {budget}
-
-Generate a complete, personalized skincare routine with product recommendations suitable for Indonesia market."""
+    # Compact user prompt — just the facts, no repetition
+    user_prompt = (
+        f"Skin: {skin_type} | Concerns: {skin_concerns} | Budget: {budget} | Market: Indonesia\n"
+        "Create morning+evening routine with product recs."
+    )
 
     payload = {
         "token": Config.LLM_TOKEN,
-        "chat": prompt
+        "chat": f"{SYSTEM_PROMPT}\n\n{user_prompt}"
     }
 
     response = requests.post(
